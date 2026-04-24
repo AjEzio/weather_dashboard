@@ -11,13 +11,20 @@ def city_cord(city):
         print("Error: ", response.status_code)
 
 def weather_det(coord):
-    response = requests.get(f"https://api.open-meteo.com/v1/forecast?latitude={coord[0]}&longitude={coord[1]}&current_weather=true")
+    response = requests.get(f"https://api.open-meteo.com/v1/forecast?latitude={coord[0]}&longitude={coord[1]}&current_weather=true&daily=temperature_2m_max,temperature_2m_min")
     if response.status_code == 200:
         data = response.json() 
         print(f"Current Temperature is: {data["current_weather"]["temperature"]} {data["current_weather_units"]["temperature"]}")
         print(f"Current Wind speed is: {data["current_weather"]["windspeed"]} {data["current_weather_units"]["windspeed"]}")
+        print("Max and Min temperature for the next seven days:")
+        for i in range(len(data["daily"]["temperature_2m_max"])):
+            print(f"{data["daily"]["time"][i]}",end = " ")
+            print(f"Max:{data["daily"]["temperature_2m_max"][i]}",end = " ")
+            print(f"Min:{data["daily"]["temperature_2m_min"][i]}",end = " ")
+            print("")
     else:
         print("Error: ", response.status_code)
+
 def main():
     print("Welcome to Weather Dashboard\n")
     city = input("Enter The city name for weather details: ")
