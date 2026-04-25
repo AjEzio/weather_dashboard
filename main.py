@@ -1,4 +1,33 @@
 import requests
+import os 
+import sqlite3
+def save_city(city,lat_long):
+    with sqlite3.connect("app.db") as db:
+        db.row_factory = sqlite3.Row
+        cursor = db.cursor()
+        cursor.execute("CREATE TABLE IF NOT EXISTS favcity (city TEXT NOT NULL, lat REAL, lon REAL )")
+        cursor.execute("SELECT * FROM favcity")
+        rows = cursor.fetchall()
+        for row in rows:
+            if row["city"] == city:
+                return
+        cursor.execute("INSERT INTO favcity VALUES(?, ?, ?)",(city, lat_long[0], lat_long[1]))
+        db.commit()
+
+def look_city():
+    with sqlite3.connect("app.db") as db:
+        cursor = db.cursor()
+        cursor.execute("CREATE TABLE IF NOT EXISTS favcity (city TEXT NOT NULL, lat REAL, lon REAL )")
+        cursor.execute("SELECT * FROM favcity")
+        rows = cursor.fetchall()
+        for i, row in enumerate(rows, start=1):
+            print(f"{i}. {row[0]}")
+        choice = int(input("Choose the number from above or Press 0 for new city: "))
+        if choice == 0:
+            return 0
+        given_city = rows[choice-1]
+        weather_det([given_city[1],given_city[2]])
+        return 1
 
 def city_cord(city):
     response = requests.get(f"https://geocoding-api.open-meteo.com/v1/search?name={city}")
@@ -6,6 +35,7 @@ def city_cord(city):
         data = response.json()
         for item in data["results"]:
             if item["name"] == city:
+                save_city(city,[item["latitude"], item["longitude"]])
                 return [item["latitude"], item["longitude"]]
     else:
         print("Error: ", response.status_code)
@@ -27,9 +57,10 @@ def weather_det(coord):
 
 def main():
     print("Welcome to Weather Dashboard\n")
-    city = input("Enter The city name for weather details: ")
-    lat_long = city_cord(city)
-    weather_det(lat_long)
+    if not look_city():
+        city = input("Enter the city name for weather details or use from saved cities: ")
+        lat_long = city_cord(city)
+        weather_det(lat_long)
 
 if __name__ == "__main__":
     main()
